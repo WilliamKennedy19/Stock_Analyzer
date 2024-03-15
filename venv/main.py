@@ -1,8 +1,9 @@
 import yfinance as YF
-from dash import Dash,dcc,html
+from dash import Dash,dcc,html, callback, clientside_callback
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import pandas as pd
+import json
 
 stock = YF.Ticker("META")
 stock_hist = YF.Ticker("META").history().reset_index()
@@ -34,8 +35,8 @@ app.layout = html.Div(
                     className="dropdown"),
                 html.Li([
                     html.Div([
-                        html.Button([html.I(className="fas fa-search")], className='btn-search', n_clicks=0),
-                        dcc.Input(id="search-bar",className='input-search', type='text', placeholder='Enter search query...')
+                        html.Button([html.I(className="fas fa-search")], id="search",className='btn-search', n_clicks=0),
+                        dcc.Input(id="input-1-state",className='input-search', type='text', placeholder='Enter search query...')
                     ],className="search-box"),
                 ])
             ],className="navbar")
@@ -107,28 +108,28 @@ app.layout = html.Div(
                     html.Tr([
                         html.Td([
                             stock.info['operatingCashflow']
-                        ]),
+                        ],id="opCashFlow"),
                         html.Td([
                             round(stock.info['trailingPE'],2)
-                        ]),
+                        ],id="pe"),
                         html.Td([
                             stock.info['enterpriseValue']
-                        ]),
+                        ],id="enterprise"),
                         html.Td([
                             str(round(stock.info['grossMargins']*100,2))+"%"
-                        ]),
+                        ],id="grossmargins"),
                         html.Td([
                             round(stock.info['trailingEps'],2)
-                        ]),
+                        ],id="eps"),
                         html.Td([
                             stock.info['marketCap']
-                        ]),
+                        ],id="market_cap"),
                         html.Td([
                             stock.info['revenueGrowth']
-                        ]),                    
+                        ],id="revGrowth"),                    
                         html.Td([
                             stock.info['fiftyTwoWeekHigh']
-                        ])
+                        ],id="52weekHigh")
                     ]),
 
                     html.Tr([
@@ -197,13 +198,17 @@ app.layout = html.Div(
 )
 
 #Search Bar Functionality
-@app.callback(
+@callback(
     Output(component_id='stock-chart', component_property='children'),
-    Input(component_id='search-bar', component_property='value')
+    Output(component_id='opCashFlow', component_property='children'),
+    Output(component_id='pe', component_property='children'),
+    Input('search', 'n_clicks'),
+    State('input-1-state', 'value')
 )
-def search_ticker(n_clicks, ticker):
-    stock = YF.Ticker(ticker)
-    return f'Search results for: {ticker}'
+def search_ticker(n_clicks,ticker):
+    print(ticker)
+    stock = YF.Ticker(str(ticker))
+    return stock, stock.info['operatingCashflow'], round(stock.info['trailingPE'],2)
 
 
 
