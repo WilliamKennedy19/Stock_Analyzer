@@ -16,6 +16,7 @@ data = (
 
 app = Dash(__name__,external_stylesheets=['venv/assets/style.css'])
 
+#
 # Main app layout for the Stock Information Screen
 app.layout = html.Div(
 
