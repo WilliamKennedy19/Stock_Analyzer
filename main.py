@@ -1,7 +1,6 @@
 import yfinance as YF
-from dash import Dash,dcc,html, callback, clientside_callback
+from dash import Dash,dcc,html, callback, clientside_callback,Input, Output, State
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 import pandas as pd
 import json
 
@@ -14,7 +13,7 @@ data = (
 
 )
 
-app = Dash(__name__,external_stylesheets=['venv/assets/style.css'])
+app = Dash(__name__,external_stylesheets=['assets/style.css'])
 
 #
 # Main app layout for the Stock Information Screen
@@ -200,16 +199,28 @@ app.layout = html.Div(
 
 #Search Bar Functionality
 @callback(
-    Output(component_id='stock-chart', component_property='children'),
+    #Output(component_id='stock-chart', component_property='children'),
     Output(component_id='opCashFlow', component_property='children'),
     Output(component_id='pe', component_property='children'),
+    Output(component_id='enterprise', component_property='children'),
+    Output(component_id='grossmargins', component_property='children'),
+    Output(component_id='eps', component_property='children'),
+    Output(component_id='market_cap', component_property='children'),
+    Output(component_id='revGrowth', component_property='children'),
+    Output(component_id='52weekHigh', component_property='children'),
     Input('search', 'n_clicks'),
     State('input-1-state', 'value')
 )
 def search_ticker(n_clicks,ticker):
-    print(ticker)
     stock = YF.Ticker(str(ticker))
-    return stock, stock.info['operatingCashflow'], round(stock.info['trailingPE'],2)
+    stock_hist = stock.history().reset_index()
+    data = (
+
+    stock_hist.query("Dividends==0.0").assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d")).sort_values(by="Date")
+
+    )
+    return stock.info['operatingCashflow'], round(stock.info['trailingPE'],2), stock.info['enterpriseValue'], str(round(stock.info['grossMargins']*100,2))+"%", round(stock.info['trailingEps'],2),stock.info['marketCap'],stock.info['revenueGrowth'],stock.info['fiftyTwoWeekHigh']
+
 
 
 
