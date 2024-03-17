@@ -1,3 +1,8 @@
+"""
+Author: William Kennedy
+Contributors: Rielly Young
+
+"""
 import yfinance as yf
 import pandas as pd
 import dash
@@ -214,10 +219,16 @@ class StockAnalyzerApp:
                 ], className='styled-table')
             ]
                 ),
+                html.Div(id="")
             ]
         )
         return layout
 
+    """
+    Searches for Stock ticker, given as user input, and updates the stock information on the dashboard
+    @param self
+    @return Information and visualizations of the given stock
+    """
     def register_callbacks(self):
         @self.app.callback(
             [
@@ -273,6 +284,7 @@ class StockAnalyzerApp:
             fiftyTwoWeekHigh = stock_info.get("fiftyTwoWeekHigh")
             freeCashFlow = stock_info.get('freeCashflow')
             returnAssets = stock_info.get('returnOnAssets')
+            totalDebt = stock_info.get('totalDebt')
             ebitda = stock_info.get('ebitda')
             shares = stock_info.get('sharesOutstanding')
             dYield = stock_info.get('dividendYield')
@@ -303,6 +315,7 @@ class StockAnalyzerApp:
                 fiftyTwoWeekHigh,
                 freeCashFlow,
                 returnAssets,
+                totalDebt,
                 ebitda,
                 shares,
                 dYield,
