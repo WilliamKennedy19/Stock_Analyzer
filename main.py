@@ -288,4 +288,8 @@ class StockAnalyzerApp:
         self.app.run_server(debug=debug)
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     StockAnalyzerApp().run(debug=True)
+=======
+    StockAnalyzerApp().run(debug=True)
+>>>>>>> origin/refactor
