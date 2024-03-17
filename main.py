@@ -24,7 +24,7 @@ import dash_bootstrap_components as dbc
 
 class StockAnalyzerApp:
     def __init__(self, initial_ticker:str = "META"):
-        self.app = dash.Dash(__name__, external_stylesheets=['assets/style.css'])
+        self.app = dash.Dash(__name__, external_stylesheets=['assets/style.css'],use_pages=True)
         self.initial_ticker = initial_ticker
         self.initial_stock = yf.Ticker(self.initial_ticker)
         self.initial_stock_hist = self.initial_stock.history().reset_index()
@@ -61,7 +61,7 @@ class StockAnalyzerApp:
                                         html.Div(
                                             [
                                                 html.A("Stock Information", href="/"),
-                                                html.A("Statements"),
+                                                html.A("Statements",href="pages/statements.py"),
                                                 html.A("Fundamental Analysis"),
                                                 html.A("Technical Analysis"),
                                             ],
