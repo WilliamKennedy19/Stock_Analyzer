@@ -1,78 +1,94 @@
-import yfinance as YF
-from dash import Dash,dcc,html, callback, clientside_callback,Input, Output, State
-import dash_bootstrap_components as dbc
+# Import required libraries
+import yfinance as yf
 import pandas as pd
-import json
+import dash
+from dash import dcc, html, callback, Input, Output, State
+import dash_bootstrap_components as dbc
 
-stock = YF.Ticker("META")
-stock_hist = YF.Ticker("META").history().reset_index()
+class StockAnalyzerApp:
+    def __init__(self, initial_ticker:str = "META"):
+        self.app = dash.Dash(__name__, external_stylesheets=['assets/style.css'])
+        self.initial_ticker = initial_ticker
+        self.initial_stock = yf.Ticker(self.initial_ticker)
+        self.initial_stock_hist = self.initial_stock.history().reset_index()
+        self.initial_data = (
+            self.initial_stock_hist.query("Dividends==0.0")
+            .assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
+            .sort_values(by="Date")
+        )
+        self.app.layout = self.build_layout()
+        self.register_callbacks()
 
-data = (
-
-    stock_hist.query("Dividends==0.0").assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d")).sort_values(by="Date")
-
-)
-
-app = Dash(__name__,external_stylesheets=['assets/style.css'])
-
-#
-# Main app layout for the Stock Information Screen
-app.layout = html.Div(
-
-    
-
-    children=[
-        html.Div([
-            html.Ul([
-                html.Li([
-                    html.Button("Home",className="dropbtn"),
-                    html.Div([
-                        html.A("Stock Information",href="/"),
-                        html.A("Statements"),
-                        html.A("Fundamental Analysis"),
-                        html.A("Technical Analysis")
-                    ],className="dropdown-content")],
-                    className="dropdown"),
-                html.Li([
-                    html.Div([
-                        html.Button([html.I(className="fas fa-search")], id="search",className='btn-search', n_clicks=0),
-                        dcc.Input(id="input-1-state",className='input-search', type='text', placeholder='Enter search query...')
-                    ],className="search-box"),
-                ])
-            ],className="navbar")
-        ]),
-
-        html.H1(children="Stock Analyzer Tool"),
-
-        html.H2(children=("Analyzing the price behaviour of the stock"),className='chart-header'),
-
-        
-
-        dcc.Graph(id="stock-chart",
-
-            figure={
-
-                "data": [
-
-                    {
-
-                        "x": data["Date"],
-
-                        "y": data["Close"],
-
-                    },
-
-                ],
-
-                "layout": {"title": "Meta Ticker- Daily Price Changes"},
-
-            },
-
-        ),
-
-        html.Div(
-
+    def build_layout(self):
+        layout = html.Div(
             children=[
+                html.Div(
+                    [
+                        html.Ul(
+                            [
+                                html.Li(
+                                    [
+                                        html.Button("Home", className="dropbtn"),
+                                        html.Div(
+                                            [
+                                                html.A("Stock Information", href="/"),
+                                                html.A("Statements"),
+                                                html.A("Fundamental Analysis"),
+                                                html.A("Technical Analysis"),
+                                            ],
+                                            className="dropdown-content",
+                                        ),
+                                    ],
+                                    className="dropdown",
+                                ),
+                                html.Li(
+                                    [
+                                        html.Div(
+                                            [
+                                                html.Button(
+                                                    [html.I(className="fas fa-search")],
+                                                    id="search",
+                                                    className="btn-search",
+                                                    n_clicks=0,
+                                                ),
+                                                dcc.Input(
+                                                    id="input-1-state",
+                                                    className="input-search",
+                                                    type="text",
+                                                    placeholder="input stock ticker...",
+                                                ),
+                                            ],
+                                            className="search-box",
+                                        ),
+                                    ]
+                                ),
+                            ],
+                            className="navbar",
+                        )
+                    ]
+                ),
+                html.H1(children="Stock Analyzer Tool"),
+                html.H2(
+                    children=("Analyzing the price behavior of the stock"),
+                    className="chart-header",
+                ),
+                dcc.Graph(
+                    id="stock-chart",
+                    figure={
+                        "data": [
+                            {
+                                "x": self.initial_data["Date"],
+                                "y": self.initial_data["Close"],
+                                "type": "scatter",
+                                "mode": "lines",
+                                "name": "Close Price",
+                            }
+                        ],
+                        "layout": {"title": "Meta Ticker - Daily Price Changes"},
+                    },
+                ),
+                html.Div(
+                    children=[
                 html.Table([
                     html.Tr([
                         html.Th([
@@ -107,28 +123,28 @@ app.layout = html.Div(
 
                     html.Tr([
                         html.Td([
-                            stock.info['operatingCashflow']
+                            self.initial_stock.info['operatingCashflow']
                         ],id="opCashFlow"),
                         html.Td([
-                            round(stock.info['trailingPE'],2)
+                            round(self.initial_stock.info['trailingPE'],2)
                         ],id="pe"),
                         html.Td([
-                            stock.info['enterpriseValue']
+                            self.initial_stock.info['enterpriseValue']
                         ],id="enterprise"),
                         html.Td([
-                            str(round(stock.info['grossMargins']*100,2))+"%"
+                            str(round(self.initial_stock.info['grossMargins']*100,2))+"%"
                         ],id="grossmargins"),
                         html.Td([
-                            round(stock.info['trailingEps'],2)
+                            round(self.initial_stock.info['trailingEps'],2)
                         ],id="eps"),
                         html.Td([
-                            stock.info['marketCap']
+                            self.initial_stock.info['marketCap']
                         ],id="market_cap"),
                         html.Td([
-                            stock.info['revenueGrowth']
+                            self.initial_stock.info['revenueGrowth']
                         ],id="revGrowth"),                    
                         html.Td([
-                            stock.info['fiftyTwoWeekHigh']
+                            self.initial_stock.info['fiftyTwoWeekHigh']
                         ],id="52weekHigh")
                     ]),
 
@@ -163,66 +179,99 @@ app.layout = html.Div(
                     ]),
                     html.Tr([
                         html.Td([
-                            stock.info['freeCashflow']
+                            self.initial_stock.info['freeCashflow']
                         ]),
                         html.Td([
-                            stock.info['returnOnAssets']
+                            self.initial_stock.info['returnOnAssets']
                         ]),
                         html.Td([
-                            stock.info['totalDebt']
+                            self.initial_stock.info['totalDebt']
                         ]),
                         html.Td([
-                            stock.info['ebitda']
+                            self.initial_stock.info['ebitda']
                         ]),
                         html.Td([
-                            stock.info['sharesOutstanding']
+                            self.initial_stock.info['sharesOutstanding']
                         ]),
                         html.Td([
-                            stock.info['dividendYield']
+                            self.initial_stock.info['dividendYield']
                         ]),
                         html.Td([
-                            stock.info['dividendRate']
+                            self.initial_stock.info['dividendRate']
                         ]),                    
                         html.Td([
-                            stock.info['52WeekChange']
+                            self.initial_stock.info['52WeekChange']
                         ])
                     ]),
                 ], className='styled-table')
             ]
-        ),
+                ),
+            ]
+        )
+        return layout
 
-        html.Div([
-            #html.P([(stock.news)])
-        ])
-    ]
-)
+    def register_callbacks(self):
+        @self.app.callback(
+            [
+                Output(component_id="opCashFlow", component_property="children"),
+                Output(component_id="pe", component_property="children"),
+                Output(component_id="enterprise", component_property="children"),
+                Output(component_id="grossmargins", component_property="children"),
+                Output(component_id="eps", component_property="children"),
+                Output(component_id="market_cap", component_property="children"),
+                Output(component_id="revGrowth", component_property="children"),
+                Output(component_id="52weekHigh", component_property="children"),
+                Output(component_id="stock-chart", component_property="figure"),
+            ],
+            [Input("search", "n_clicks")],
+            [State("input-1-state", "value")],
+        )
+        def search_ticker(n_clicks, ticker):
+            stock = yf.Ticker(str(ticker))
+            stock_hist = stock.history().reset_index()
+            data = (
+                stock_hist.query("Dividends==0.0")
+                .assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
+                .sort_values(by="Date")
+            )
 
-#Search Bar Functionality
-@callback(
-    #Output(component_id='stock-chart', component_property='children'),
-    Output(component_id='opCashFlow', component_property='children'),
-    Output(component_id='pe', component_property='children'),
-    Output(component_id='enterprise', component_property='children'),
-    Output(component_id='grossmargins', component_property='children'),
-    Output(component_id='eps', component_property='children'),
-    Output(component_id='market_cap', component_property='children'),
-    Output(component_id='revGrowth', component_property='children'),
-    Output(component_id='52weekHigh', component_property='children'),
-    Input('search', 'n_clicks'),
-    State('input-1-state', 'value')
-)
-def search_ticker(n_clicks,ticker):
-    stock = YF.Ticker(str(ticker))
-    stock_hist = stock.history().reset_index()
-    data = (
+            stock_info = stock.info
+            opCashFlow = stock_info.get("operatingCashflow")
+            pe = round(stock_info.get("trailingPE"), 2)
+            enterprise = stock_info.get("enterpriseValue")
+            grossmargins = str(round(stock_info.get("grossMargins") * 100, 2)) + "%"
+            eps = round(stock_info.get("trailingEps"), 2)
+            market_cap = stock_info.get("marketCap")
+            revGrowth = stock_info.get("revenueGrowth")
+            fiftyTwoWeekHigh = stock_info.get("fiftyTwoWeekHigh")
 
-    stock_hist.query("Dividends==0.0").assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d")).sort_values(by="Date")
+            figure = {
+                "data": [
+                    {
+                        "x": data["Date"],
+                        "y": data["Close"],
+                        "type": "scatter",
+                        "mode": "lines",
+                        "name": "Close Price",
+                    }
+                ],
+                "layout": {"title": f"{ticker} - Daily Price Changes"},
+            }
 
-    )
-    return stock.info['operatingCashflow'], round(stock.info['trailingPE'],2), stock.info['enterpriseValue'], str(round(stock.info['grossMargins']*100,2))+"%", round(stock.info['trailingEps'],2),stock.info['marketCap'],stock.info['revenueGrowth'],stock.info['fiftyTwoWeekHigh']
+            return (
+                opCashFlow,
+                pe,
+                enterprise,
+                grossmargins,
+                eps,
+                market_cap,
+                revGrowth,
+                fiftyTwoWeekHigh,
+                figure,
+            )
 
-
-
+    def run(self, debug=False):
+        self.app.run_server(debug=debug)
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    StockAnalyzerApp().run(debug=True)
