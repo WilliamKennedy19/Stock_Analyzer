@@ -4,6 +4,19 @@ import dash
 from dash import dcc, html, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 
+# Error onload:
+# pandas.errors.UndefinedVariableError: name 'Dividends' is not defined
+#
+# Reproduction steps:
+#   1. remove line 80 
+#   1. run main.py
+#
+# Comments:
+# - This error is related to the empty request that is send when the searchbar is empty.
+# - You can also remove the ticker from the searchbar without removing line 80 to repro this error.
+# - there is def a better way to handle this error.
+
+
 class StockAnalyzerApp:
     def __init__(self, initial_ticker:str = "META"):
         self.app = dash.Dash(__name__, external_stylesheets=['assets/style.css'])
@@ -11,13 +24,25 @@ class StockAnalyzerApp:
         self.initial_stock = yf.Ticker(self.initial_ticker)
         self.initial_stock_hist = self.initial_stock.history().reset_index()
         self.initial_data = (
-            self.initial_stock_hist.query("Dividends==0.0")
+            self.initial_stock_hist.query("Dividends==0")
             .assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
             .sort_values(by="Date")
         )
+        self.figure={
+                        "data": [
+                            {
+                                "x": self.initial_data["Date"],
+                                "y": self.initial_data["Close"],
+                                "type": "scatter",
+                                "mode": "lines",
+                                "name": "Close Price",
+                            }
+                        ],
+                        "layout": {"title": f"{self.initial_stock.info['shortName']} ({self.initial_ticker}) - Daily Price Changes"},
+                    }
         self.app.layout = self.build_layout()
         self.register_callbacks()
-
+    
     def build_layout(self):
         layout = html.Div(
             children=[
@@ -55,6 +80,7 @@ class StockAnalyzerApp:
                                                     className="input-search",
                                                     type="text",
                                                     placeholder="input stock ticker...",
+                                                    value="META"
                                                 ),
                                             ],
                                             className="search-box",
@@ -73,18 +99,7 @@ class StockAnalyzerApp:
                 ),
                 dcc.Graph(
                     id="stock-chart",
-                    figure={
-                        "data": [
-                            {
-                                "x": self.initial_data["Date"],
-                                "y": self.initial_data["Close"],
-                                "type": "scatter",
-                                "mode": "lines",
-                                "name": "Close Price",
-                            }
-                        ],
-                        "layout": {"title": "Meta Ticker - Daily Price Changes"},
-                    },
+                    figure= self.figure,
                 ),
                 html.Div(
                     children=[
@@ -217,12 +232,10 @@ class StockAnalyzerApp:
                 Output(component_id="stock-chart", component_property="figure"),
             ],
             [Input("search", "n_clicks")],
-            [State("input-1-state", "value")],
-        )
-        def search_ticker(n_clicks, ticker):
-            if ticker == "": # TODO: remove after debugging
-                ticker = "META"
+            [State("input-1-state", "value")]
             
+        )
+        def search_ticker(n_clicks, ticker:str= "META"):
             stock = yf.Ticker(str(ticker))
             stock_hist = stock.history().reset_index()
             data = (
@@ -230,7 +243,6 @@ class StockAnalyzerApp:
                 .assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
                 .sort_values(by="Date")
             )
-            print(data) # TODO: remove after debugging
             stock_info = stock.info
             opCashFlow = stock_info.get("operatingCashflow")
             pe = round(stock_info.get("trailingPE"), 2)
@@ -241,7 +253,7 @@ class StockAnalyzerApp:
             revGrowth = stock_info.get("revenueGrowth")
             fiftyTwoWeekHigh = stock_info.get("fiftyTwoWeekHigh")
 
-            figure = {
+            self.figure = {
                 "data": [
                     {
                         "x": data["Date"],
@@ -251,7 +263,7 @@ class StockAnalyzerApp:
                         "name": "Close Price",
                     }
                 ],
-                "layout": {"title": f"{ticker} - Daily Price Changes"},
+                "layout": {"title": f"{stock.info['shortName']} ({ticker}) - Daily Price Changes"}
             }
 
             return (
@@ -263,7 +275,7 @@ class StockAnalyzerApp:
                 market_cap,
                 revGrowth,
                 fiftyTwoWeekHigh,
-                figure,
+                self.figure
             )
 
     def run(self, debug=False):
