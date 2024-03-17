@@ -1,4 +1,3 @@
-# Import required libraries
 import yfinance as yf
 import pandas as pd
 import dash
@@ -114,10 +113,7 @@ class StockAnalyzerApp:
                         ]),
                         html.Th([
                             "52 Week High"
-                        ]),
-                        html.Th([
-                            ""
-                        ]),
+                        ])
 
                     ]),
 
@@ -172,9 +168,6 @@ class StockAnalyzerApp:
                         ]),
                         html.Th([
                             "52 Week Change"
-                        ]),
-                        html.Th([
-                            
                         ])
                     ]),
                     html.Tr([
@@ -227,6 +220,9 @@ class StockAnalyzerApp:
             [State("input-1-state", "value")],
         )
         def search_ticker(n_clicks, ticker):
+            if ticker == "": # TODO: remove after debugging
+                ticker = "META"
+            
             stock = yf.Ticker(str(ticker))
             stock_hist = stock.history().reset_index()
             data = (
@@ -234,7 +230,7 @@ class StockAnalyzerApp:
                 .assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
                 .sort_values(by="Date")
             )
-
+            print(data) # TODO: remove after debugging
             stock_info = stock.info
             opCashFlow = stock_info.get("operatingCashflow")
             pe = round(stock_info.get("trailingPE"), 2)
