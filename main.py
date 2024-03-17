@@ -188,28 +188,28 @@ class StockAnalyzerApp:
                     html.Tr([
                         html.Td([
                             self.initial_stock.info['freeCashflow']
-                        ]),
+                        ],id='freeCashFlow'),
                         html.Td([
                             self.initial_stock.info['returnOnAssets']
-                        ]),
+                        ],id="returnOnAssets"),
                         html.Td([
                             self.initial_stock.info['totalDebt']
-                        ]),
+                        ],id="totalDebt"),
                         html.Td([
                             self.initial_stock.info['ebitda']
-                        ]),
+                        ],id="ebitda"),
                         html.Td([
                             self.initial_stock.info['sharesOutstanding']
-                        ]),
+                        ],id="sharesOutstanding"),
                         html.Td([
                             self.initial_stock.info['dividendYield']
-                        ]),
+                        ],id="dividendYield"),
                         html.Td([
                             self.initial_stock.info['dividendRate']
-                        ]),                    
+                        ],id="dividendRate"),                    
                         html.Td([
                             self.initial_stock.info['52WeekChange']
-                        ])
+                        ],id="52WeekChange")
                     ]),
                 ], className='styled-table')
             ]
@@ -229,6 +229,14 @@ class StockAnalyzerApp:
                 Output(component_id="market_cap", component_property="children"),
                 Output(component_id="revGrowth", component_property="children"),
                 Output(component_id="52weekHigh", component_property="children"),
+                Output(component_id="freeCashFlow", component_property="children"),
+                Output(component_id="returnOnAssets", component_property="children"),
+                Output(component_id="totalDebt", component_property="children"),
+                Output(component_id="ebitda", component_property="children"),
+                Output(component_id="sharesOutstanding", component_property="children"),
+                Output(component_id="dividendYield", component_property="children"),
+                Output(component_id="dividendRate", component_property="children"),
+                Output(component_id="52WeekChange", component_property="children"),
                 Output(component_id="stock-chart", component_property="figure"),
             ],
             [Input("search", "n_clicks")],
@@ -236,13 +244,18 @@ class StockAnalyzerApp:
             
         )
         def search_ticker(n_clicks, ticker:str= "META"):
-            stock = yf.Ticker(str(ticker))
-            stock_hist = stock.history().reset_index()
-            data = (
-                stock_hist.query("Dividends==0.0")
-                .assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
-                .sort_values(by="Date")
-            )
+            try:
+                stock = yf.Ticker(str(ticker))
+                stock_hist = stock.history().reset_index()
+                data = (
+                    stock_hist.query("Dividends==0.0")
+                    .assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
+                    .sort_values(by="Date")
+                )
+            except():
+                print("No stock info exists")
+
+
             stock_info = stock.info
             try:
                 opCashFlow = stock_info.get("operatingCashflow")
@@ -258,6 +271,13 @@ class StockAnalyzerApp:
             market_cap = stock_info.get("marketCap")
             revGrowth = stock_info.get("revenueGrowth")
             fiftyTwoWeekHigh = stock_info.get("fiftyTwoWeekHigh")
+            freeCashFlow = stock_info.get('freeCashflow')
+            returnAssets = stock_info.get('returnOnAssets')
+            ebitda = stock_info.get('ebitda')
+            shares = stock_info.get('sharesOutstanding')
+            dYield = stock_info.get('dividendYield')
+            dRate = stock_info.get('dividendRate')
+            fiftyTwoWeekChange = stock_info.get('52WeekChange')
 
             self.figure = {
                 "data": [
@@ -281,6 +301,13 @@ class StockAnalyzerApp:
                 market_cap,
                 revGrowth,
                 fiftyTwoWeekHigh,
+                freeCashFlow,
+                returnAssets,
+                ebitda,
+                shares,
+                dYield,
+                dRate,
+                fiftyTwoWeekChange,
                 self.figure
             )
 
@@ -288,8 +315,4 @@ class StockAnalyzerApp:
         self.app.run_server(debug=debug)
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     StockAnalyzerApp().run(debug=True)
-=======
-    StockAnalyzerApp().run(debug=True)
->>>>>>> origin/refactor
