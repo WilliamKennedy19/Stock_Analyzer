@@ -64,7 +64,7 @@ app.layout = html.Div(
 
                     ],
 
-                    "layout": {"title": "Meta Ticker- Daily Price Changes"},
+                    "layout": {"title": f"{stock.info['shortName']} (META) - Daily Price Changes"},
 
                 },
 
@@ -219,6 +219,8 @@ def search_ticker(n_clicks,ticker):
 
     data = (stock_hist.query("Dividends==0").assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d")).sort_values(by="Date"))
 
+    stock_info = stock.info
+
     chart = html.Div([dcc.Graph(
 
             figure={
@@ -235,12 +237,54 @@ def search_ticker(n_clicks,ticker):
 
                 ],
 
-                "layout": {"title": "Meta Ticker- Daily Price Changes"},
+                "layout": {"title": f"{stock.info['shortName']} ({str.upper(ticker)}) - Daily Price Changes"},
 
             },
 
         )])
-    return chart, stock.info['operatingCashflow'], round(stock.info['trailingPE'],2), stock.info['enterpriseValue'], str(round(stock.info['grossMargins']*100,2))+"%", round(stock.info['trailingEps'],2),stock.info['marketCap'],stock.info['revenueGrowth'],stock.info['fiftyTwoWeekHigh']
+    try:
+        opCashFlow = stock_info.get("operatingCashflow")
+    except():
+         opCashFlow = "NA"
+
+    try: 
+        pe = round(stock_info.get("trailingPE"), 2)
+    except(TypeError):
+        pe = "NA"
+
+    enterprise = stock_info.get("enterpriseValue")
+    grossmargins = str(round(stock_info.get("grossMargins") * 100, 2)) + "%"
+    eps = round(stock_info.get("trailingEps"), 2)
+    market_cap = stock_info.get("marketCap")
+    revGrowth = stock_info.get("revenueGrowth")
+    fiftyTwoWeekHigh = stock_info.get("fiftyTwoWeekHigh")
+    freeCashFlow = stock_info.get('freeCashflow')
+    returnAssets = stock_info.get('returnOnAssets')
+    totalDebt = stock_info.get('totalDebt')
+    ebitda = stock_info.get('ebitda')
+    shares = stock_info.get('sharesOutstanding')
+    dYield = stock_info.get('dividendYield')
+    dRate = stock_info.get('dividendRate')
+    fiftyTwoWeekChange = stock_info.get('52WeekChange')
+
+    return (    chart,
+                opCashFlow,
+                pe,
+                enterprise,
+                grossmargins,
+                eps,
+                market_cap,
+                revGrowth,
+                fiftyTwoWeekHigh,
+                freeCashFlow,
+                returnAssets,
+                totalDebt,
+                ebitda,
+                shares,
+                dYield,
+                dRate,
+                fiftyTwoWeekChange,
+            )
 
 
 
