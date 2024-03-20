@@ -47,28 +47,30 @@ app.layout = html.Div(
         html.H2(children=("Analyzing the price behaviour of the stock"),className='chart-header'),
 
         
+        html.Div([
+            dcc.Graph(
 
-        dcc.Graph(id="stock-chart",
+                figure={
 
-            figure={
+                    "data": [
 
-                "data": [
+                        {
 
-                    {
+                            "x": data["Date"],
 
-                        "x": data["Date"],
+                            "y": data["Close"],
 
-                        "y": data["Close"],
+                        },
 
-                    },
+                    ],
 
-                ],
+                    "layout": {"title": "Meta Ticker- Daily Price Changes"},
 
-                "layout": {"title": "Meta Ticker- Daily Price Changes"},
+                },
 
-            },
-
-        ),
+            ),
+        ],id="stockchart"),
+        
 
         html.Div(
 
@@ -199,7 +201,7 @@ app.layout = html.Div(
 
 #Search Bar Functionality
 @callback(
-    #Output(component_id='stock-chart', component_property='children'),
+    Output(component_id='stockchart', component_property='children'),
     Output(component_id='opCashFlow', component_property='children'),
     Output(component_id='pe', component_property='children'),
     Output(component_id='enterprise', component_property='children'),
@@ -214,12 +216,31 @@ app.layout = html.Div(
 def search_ticker(n_clicks,ticker):
     stock = YF.Ticker(str(ticker))
     stock_hist = stock.history().reset_index()
-    data = (
 
-    stock_hist.query("Dividends==0.0").assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d")).sort_values(by="Date")
+    data = (stock_hist.query("Dividends==0").assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d")).sort_values(by="Date"))
 
-    )
-    return stock.info['operatingCashflow'], round(stock.info['trailingPE'],2), stock.info['enterpriseValue'], str(round(stock.info['grossMargins']*100,2))+"%", round(stock.info['trailingEps'],2),stock.info['marketCap'],stock.info['revenueGrowth'],stock.info['fiftyTwoWeekHigh']
+    chart = html.Div([dcc.Graph(
+
+            figure={
+
+                "data": [
+
+                    {
+
+                        "x": data["Date"],
+
+                        "y": data["Close"],
+
+                    },
+
+                ],
+
+                "layout": {"title": "Meta Ticker- Daily Price Changes"},
+
+            },
+
+        )])
+    return chart, stock.info['operatingCashflow'], round(stock.info['trailingPE'],2), stock.info['enterpriseValue'], str(round(stock.info['grossMargins']*100,2))+"%", round(stock.info['trailingEps'],2),stock.info['marketCap'],stock.info['revenueGrowth'],stock.info['fiftyTwoWeekHigh']
 
 
 
