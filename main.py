@@ -104,9 +104,8 @@ app.layout = html.Div(
                         html.Th([
                             ""
                         ]),
-
                     ]),
-
+    
                     html.Tr([
                         html.Td([
                             stock.info['operatingCashflow']
@@ -115,25 +114,25 @@ app.layout = html.Div(
                             round(stock.info['trailingPE'],2)
                         ],id="pe"),
                         html.Td([
-                            stock.info['enterpriseValue']
+                                
                         ],id="enterprise"),
                         html.Td([
-                            str(round(stock.info['grossMargins']*100,2))+"%"
+                                
                         ],id="grossmargins"),
                         html.Td([
-                            round(stock.info['trailingEps'],2)
+                                
                         ],id="eps"),
                         html.Td([
-                            stock.info['marketCap']
+                                
                         ],id="market_cap"),
                         html.Td([
-                            stock.info['revenueGrowth']
+                                
                         ],id="revGrowth"),                    
                         html.Td([
-                            stock.info['fiftyTwoWeekHigh']
+                                
                         ],id="52weekHigh")
                     ]),
-
+    
                     html.Tr([
                         html.Th([
                             "Free Cash Flow"
@@ -160,42 +159,54 @@ app.layout = html.Div(
                             "52 Week Change"
                         ]),
                         html.Th([
-                            
+                                
                         ])
                     ]),
                     html.Tr([
                         html.Td([
                             stock.info['freeCashflow']
-                        ]),
+                        ],id="freeCashFlow"),
                         html.Td([
                             stock.info['returnOnAssets']
-                        ]),
+                        ],id="returnOnAssets"),
                         html.Td([
                             stock.info['totalDebt']
-                        ]),
+                        ],id="totalDebt"),
                         html.Td([
                             stock.info['ebitda']
-                        ]),
+                        ],id="ebitda"),
                         html.Td([
                             stock.info['sharesOutstanding']
-                        ]),
+                        ],id="sharesOutstanding"),
                         html.Td([
                             stock.info['dividendYield']
-                        ]),
+                        ],id="dividendYield"),
                         html.Td([
                             stock.info['dividendRate']
-                        ]),                    
+                        ],id="dividendRate"),                    
                         html.Td([
                             stock.info['52WeekChange']
-                        ])
-                    ]),
+                        ],id="52WeekChange")
                 ], className='styled-table')
             ]
         ),
 
+        html.H1("Statements for {}".format(str(stock.info['shortName'])) ),
+    
         html.Div([
-            #html.P([(stock.news)])
-        ])
+            html.H2("Income Statement"),
+            dash_table.DataTable(data=stock_income.to_dict("records"))
+        ],id="incomeStatement"),
+    
+        html.Div([
+            html.H2("Balance Sheet"),
+            dash_table.DataTable(data=stock_balance.to_dict("records"))
+        ],id="balanceSheet"),
+    
+        html.Div([
+            html.H2("Cash Flow Statement"),
+            dash_table.DataTable(data=stock_cashFlow.to_dict("records"))
+        ],id="cashFlowStatement")
     ]
 )
 
@@ -210,6 +221,20 @@ app.layout = html.Div(
     Output(component_id='market_cap', component_property='children'),
     Output(component_id='revGrowth', component_property='children'),
     Output(component_id='52weekHigh', component_property='children'),
+    Output(component_id='52weekHigh', component_property='children'),
+    Output(component_id='freeCashFlow', component_property='children'),
+    Output(component_id='returnOnAssets', component_property='children'),
+    Output(component_id='totalDebt', component_property='children'),
+    Output(component_id='ebitda', component_property='children'),
+    Output(component_id='sharesOutstanding', component_property='children'),
+    Output(component_id='dividendYield', component_property='children'),
+    Output(component_id='dividendRate', component_property='children'),
+    Output(component_id='52WeekChange', component_property='children'),
+    Output(component_id="stock-info-title",component_property='children'),
+    Output(component_id="statementsTitle", component_property="children"),
+    Output(component_id="incomeStatement",component_property="children"),
+    Output(component_id="balanceSheet",component_property="children"),
+    Output(component_id="cashFlowStatement",component_property="children"),
     Input('search', 'n_clicks'),
     State('input-1-state', 'value')
 )
@@ -266,6 +291,29 @@ def search_ticker(n_clicks,ticker):
     dYield = stock_info.get('dividendYield')
     dRate = stock_info.get('dividendRate')
     fiftyTwoWeekChange = stock_info.get('52WeekChange')
+    longName = "Stock Information- {}".format(stock.info["longName"])
+
+    stock_income = stock.income_stmt.set_axis(['2023', '2022', '2021','2020'], axis=1).reset_index()
+    stock_balance = stock.balance_sheet.set_axis(['2023', '2022', '2021','2020'], axis=1).reset_index()
+    stock_cashFlow = stock.cash_flow.set_axis(['2023', '2022', '2021','2020'], axis=1).reset_index()
+    
+    statementsTitle = "Statements for {}".format(str(stock.info['shortName'])),
+
+    income = html.Div([
+        html.H2("Income Statement"),
+        dash_table.DataTable(data=stock_income.to_dict("records"))
+    ])
+
+    balance = html.Div([
+        html.H2("Balance Sheet"),
+        dash_table.DataTable(data=stock_balance.to_dict("records"))
+    ])
+
+    cashFlow = html.Div([
+        html.H2("Cash Flow Statement"),
+        dash_table.DataTable(data=stock_cashFlow.to_dict("records"))
+    ])
+
 
     return (    chart,
                 opCashFlow,
@@ -284,6 +332,11 @@ def search_ticker(n_clicks,ticker):
                 dYield,
                 dRate,
                 fiftyTwoWeekChange,
+                longName,
+                statementsTitle,
+                income,
+                balance,
+                cashFlow
             )
 
 
